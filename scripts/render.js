@@ -189,6 +189,132 @@ export function mockDashboard(theme, mode, { large = false } = {}) {
 </div>`;
 }
 
+// ---------- mini-replica of Hudu's real Admin page ----------
+
+// Section banners + tiles as they appear on Hudu's Admin screen. Banner
+// accent families are fixed (cyan/blue/red) and resolved per mode.
+const ADMIN_SECTIONS = [
+  {
+    title: "BASIC SETUP",
+    family: "cyan",
+    tiles: ["General Settings", "Security", "Hudini", "Design", "Portal", "Users"],
+  },
+  {
+    title: "CORE",
+    family: "blue",
+    tiles: ["Asset Layouts", "Process Templates", "Lists", "IPAM", "Racks", "Password Folders", "Flags"],
+  },
+  {
+    title: "ACCOUNT ADMINISTRATION",
+    family: "red",
+    tiles: ["Integrations", "External Apps", "Hudu Bridge", "Import Data", "Export Data", "API Keys", "Email Setup"],
+  },
+];
+
+// One consistent icon approach: tiny accent-tinted rounded squares holding a
+// monochrome text glyph colored with the accent (no emoji — they don't theme).
+const GLYPHS = ["⚙", "✦", "◆", "▣", "◈", "✚", "●", "▲", "■", "♦", "✱", "◐", "▤", "◧", "◎", "✷", "◍", "☰", "⬗", "◭"];
+
+const REPLICA_BASE_TOKENS = [
+  "black", "paper", "base-950", "base-900", "base-800", "base-700",
+  "base-600", "base-500", "base-300", "base-200", "base-100", "base-50",
+];
+
+function adminReplicaAccents(theme, mode) {
+  if (!REPLICA_BASE_TOKENS.every((k) => theme.base?.[k])) return null;
+  if (!theme.primary) return null;
+  const sub = mode === "dark" ? "400" : "600";
+  const accents = {};
+  for (const f of ["cyan", "blue", "red"]) {
+    const hex = theme.accents?.[f]?.[sub];
+    if (!hex) return null;
+    accents[f] = hex;
+  }
+  return accents;
+}
+
+// Faithful mini Hudu Admin page rendered from palette tokens via inline
+// styles. Same container API as mockDashboard (16/10, full width); falls
+// back to the abstract mockDashboard when a needed token is missing.
+export function adminPreview(theme, mode, { large = false } = {}) {
+  const sectionAccents = adminReplicaAccents(theme, mode);
+  if (!sectionAccents) return mockDashboard(theme, mode, { large });
+
+  const t = modeTokens(theme, mode);
+  const px = (n) => `${large ? Math.round(n * 1.6 * 10) / 10 : n}px`;
+  let glyphIdx = 0;
+  const nextGlyph = () => GLYPHS[glyphIdx++ % GLYPHS.length];
+
+  const clip = "white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+
+  // --- top nav ---
+  const navItem = (label) =>
+    `<span style="color:${escapeHtml(t.muted)};font-size:${px(5)};${clip}">${escapeHtml(label)}</span>`;
+  const adminItem = `<span style="color:${escapeHtml(t.text)};font-size:${px(5)};font-weight:700;background:${escapeHtml(hexToRgba(theme.primary, 0.14))};border-bottom:${px(1.5)} solid ${escapeHtml(theme.primary)};border-radius:${px(2)} ${px(2)} 0 0;padding:${px(2)} ${px(4)};${clip}">Admin</span>`;
+  const searchBox = `<div style="margin-left:auto;background:${escapeHtml(t.bg)};border:1px solid ${escapeHtml(t.cardBorder)};border-radius:9999px;width:20%;height:${px(8)};display:flex;align-items:center;gap:${px(3)};padding:0 ${px(5)};flex-shrink:0">
+    <span style="color:${escapeHtml(t.faint)};font-size:${px(4.5)};line-height:1">⌕</span>
+    <div style="background:${escapeHtml(t.faint)};width:55%;height:${px(2.5)};border-radius:9999px"></div>
+  </div>`;
+  const nav = `<div style="background:${escapeHtml(t.nav)};border-bottom:1px solid ${escapeHtml(t.border)};height:${px(17)};display:flex;align-items:center;gap:${px(7)};padding:0 ${px(8)};flex-shrink:0">
+    <span style="color:${escapeHtml(theme.primary)};font-size:${px(5.5)};font-weight:800;letter-spacing:0.08em;max-width:18%;${clip}">${escapeHtml(theme.name.toUpperCase())}</span>
+    ${navItem("Companies")}${navItem("Global")}${navItem("Central KB")}${navItem("My Vault")}${adminItem}
+    ${searchBox}
+  </div>`;
+
+  // --- left sidebar: grouped nav ---
+  const sidebarGroups = [
+    { label: "BASIC SETUP", rows: ["General Settings", "Security", "Hudini", "Design", "Portal", "Users"] },
+    { label: "CORE", rows: ["Asset Layouts", "Process Templates", "Lists"] },
+    { label: "ACCOUNT ADMINISTR…", rows: ["Integrations", "External Apps"] },
+  ];
+  const sidebar = sidebarGroups.map((g, gi) => {
+    const rows = (large ? g.rows : g.rows.slice(0, gi === 0 ? 4 : 2)).map((label) =>
+      `<div style="display:flex;align-items:center;gap:${px(3)};min-width:0">
+        <span style="color:${escapeHtml(t.muted)};font-size:${px(4.5)};line-height:1;flex-shrink:0">${nextGlyph()}</span>
+        <span style="color:${escapeHtml(t.text)};font-size:${px(5)};${clip}">${escapeHtml(label)}</span>
+      </div>`
+    ).join("");
+    return `<div style="display:flex;flex-direction:column;gap:${px(3.5)};min-width:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:${px(2)};min-width:0">
+        <span style="color:${escapeHtml(t.muted)};font-size:${px(4)};font-weight:700;letter-spacing:0.08em;${clip}">${escapeHtml(g.label)}</span>
+        <span style="color:${escapeHtml(t.faint)};font-size:${px(4)};line-height:1;flex-shrink:0">▾</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join("");
+
+  // --- main: Admin heading + banner/tile sections ---
+  const tile = (label, accent) =>
+    `<div style="background:${escapeHtml(t.card)};border:1px solid ${escapeHtml(t.cardBorder)};border-radius:${px(3)};padding:${px(3)} ${px(4)};display:flex;align-items:center;gap:${px(3)};min-width:0">
+      <span style="background:${escapeHtml(hexToRgba(accent, 0.16))};color:${escapeHtml(accent)};font-size:${px(4.5)};line-height:1;border-radius:${px(1.5)};width:${px(8)};height:${px(8)};display:flex;align-items:center;justify-content:center;flex-shrink:0">${nextGlyph()}</span>
+      <span style="color:${escapeHtml(t.text)};font-size:${px(5)};font-weight:700;${clip}">${escapeHtml(label)}</span>
+    </div>`;
+
+  const sections = ADMIN_SECTIONS.map((s) => {
+    const accent = sectionAccents[s.family];
+    const tiles = (large ? s.tiles : s.tiles.slice(0, 3)).map((l) => tile(l, accent)).join("");
+    return `<div style="display:flex;flex-direction:column;gap:${px(4)};min-width:0">
+      <div style="background:${escapeHtml(hexToRgba(accent, 0.18))};border-radius:${px(3)};padding:${px(3)} ${px(6)}">
+        <span style="color:${escapeHtml(accent)};font-size:${px(4.5)};font-weight:800;letter-spacing:0.1em;${clip};display:block">${escapeHtml(s.title)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:${px(4)}">${tiles}</div>
+    </div>`;
+  }).join("");
+
+  const main = `<div style="flex:1;padding:${px(8)} ${px(9)};display:flex;flex-direction:column;gap:${px(6)};min-width:0;overflow:hidden">
+    <span style="color:${escapeHtml(t.text)};font-size:${px(9)};font-weight:800;line-height:1;${clip}">Admin</span>
+    ${sections}
+  </div>`;
+
+  return `<div style="background:${escapeHtml(t.bg)};border-radius:${px(8)};overflow:hidden;width:100%;aspect-ratio:16/10;display:flex;flex-direction:column;font-family:ui-sans-serif,system-ui,sans-serif">
+  ${nav}
+  <div style="display:flex;flex:1;min-height:0">
+    <div style="background:${escapeHtml(t.sidebar)};border-right:1px solid ${escapeHtml(t.border)};width:22%;padding:${px(7)} ${px(6)};display:flex;flex-direction:column;gap:${px(7)};flex-shrink:0;overflow:hidden">${sidebar}</div>
+    ${main}
+  </div>
+</div>`;
+}
+
 // ---------- badges ----------
 
 function modeBadgeText(theme) {
@@ -229,7 +355,7 @@ export function themeCard(theme) {
   href="/themes/${attr(theme.slug)}/"
   class="theme-card group relative flex flex-col rounded-xl border border-border/40 bg-card overflow-hidden hover:border-[var(--card-accent)] transition-colors"
   style="--card-accent:${escapeHtml(theme.primary)}">
-  <div class="relative p-2">${mockDashboard(theme, "dark")}</div>
+  <div class="relative p-2">${adminPreview(theme, "dark")}</div>
   <div class="p-3 pt-1 space-y-1.5 grow">
     <div class="flex items-start justify-between gap-2">
       <h3 class="font-mono text-sm font-medium text-foreground truncate">${escapeHtml(theme.name)}</h3>
@@ -464,11 +590,11 @@ export function themeDetailPage(theme) {
     <div class="grid gap-4 sm:grid-cols-2">
       <div class="space-y-2">
         <p class="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">dark</p>
-        <div class="border border-border/40 rounded-xl p-1.5 bg-card">${mockDashboard(theme, "dark", { large: true })}</div>
+        <div class="border border-border/40 rounded-xl p-1.5 bg-card">${adminPreview(theme, "dark", { large: true })}</div>
       </div>
       <div class="space-y-2">
         <p class="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">${lightLabel}</p>
-        <div class="border border-border/40 rounded-xl p-1.5 bg-card">${mockDashboard(theme, "light", { large: true })}</div>
+        <div class="border border-border/40 rounded-xl p-1.5 bg-card">${adminPreview(theme, "light", { large: true })}</div>
       </div>
     </div>
   </div>`;

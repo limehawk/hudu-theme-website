@@ -1,0 +1,13 @@
+{
+  "note": "Extracted from a live Hudu /admin page. Banner bg = section accent blended into page bg (~25% alpha look); banner title + tile icons use the section accent. Tile icon classes are Font Awesome (far).",
+  "topNav": ["Companies", "Global", "Central KB", "My Vault", "Admin (active)", "Search box"],
+  "sections": [
+    {"title": "Basic Setup", "accentFamily": "cyan",
+     "tiles": [["General Settings","fa-cog"],["Security","fa-lock"],["Hudini","fa-sparkles"],["Design","fa-palette"],["Portal","fa-share-nodes"],["Users","fa-user"],["Groups","fa-user-friends"]]},
+    {"title": "Core", "accentFamily": "blue",
+     "tiles": [["Asset Layouts","fa-wrench"],["Process Templates","fa-check"],["Lists","fa-list-radio"],["IPAM","fa-network-wired"],["Racks","fa-server"],["Password Folders","fa-key"],["Alerts","fa-bell"],["Workflows","fa-arrow-progress"],["Flags","fa-flag"]]},
+    {"title": "Account Administration", "accentFamily": "red",
+     "tiles": [["Integrations","fa-plug"],["External Apps","fa-phone-laptop"],["Hudu Bridge","fa-circle-nodes"],["Import Data","fa-file-import"],["Export Data","fa-file-export"],["API Keys","fa-code"],["Activity Logs","fa-wave-pulse"],["License Key","fa-money-bill"],["Email Setup","fa-envelope"]]}
+  ],
+  "sidebar": "Mirrors the same three groups: uppercase group label with chevron, then icon+label rows per tile."
+}
