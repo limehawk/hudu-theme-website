@@ -1,0 +1,24 @@
+name: Site bug
+description: Something on huduthemes.com is broken or wrong
+title: "[site] <what's broken>"
+labels: ["bug"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+      placeholder: https://huduthemes.com/themes/kanagawa/
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wrong
+      description: What you expected vs what happened. Screenshots welcome.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / device
+      placeholder: Firefox 140, Linux desktop
