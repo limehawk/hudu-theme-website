@@ -333,7 +333,7 @@ function handmadeBadge(theme) {
 
 function starCount(theme) {
   return theme.stars > 0
-    ? `<span class="font-mono text-[10px] text-muted-foreground shrink-0" title="${attr(`${theme.stars} stars on GitHub`)}">★ ${theme.stars}</span>`
+    ? `<span class="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground shrink-0" title="${attr(`${theme.stars} stars on GitHub`)}"><svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true" class="shrink-0 -mt-px"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.819 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"></path></svg>${theme.stars}</span>`
     : "";
 }
 
@@ -610,7 +610,7 @@ export function themeDetailPage(theme) {
     </a>` : "";
 
   const starsLine = theme.stars > 0
-    ? `<span class="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground">★ ${theme.stars} on GitHub</span>`
+    ? `<span class="inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground"><svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true" class="shrink-0 -mt-px"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.819 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"></path></svg>${theme.stars} on GitHub</span>`
     : "";
 
   const body = `<div class="mx-auto max-w-6xl px-6 py-10">
