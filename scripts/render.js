@@ -21,9 +21,7 @@ const THEMES_REPO = "https://github.com/limehawk/hudu-themes";
 // ---------- shell ----------
 
 const HEAD_FONTS = `
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 `.trim();
 
 export function layout({ title, description, path, body }) {
