@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Workbench";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/workbench-latin.woff2") format("woff2");
+}
+
 @import "tailwindcss";
 
 @source "../scripts/**/*.js";

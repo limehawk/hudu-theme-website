@@ -23,7 +23,7 @@ const THEMES_REPO = "https://github.com/limehawk/hudu-themes";
 const HEAD_FONTS = `
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Workbench&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 `.trim();
 
 export function layout({ title, description, path, body }) {
@@ -205,6 +205,12 @@ function handmadeBadge(theme) {
     : "";
 }
 
+function starCount(theme) {
+  return theme.stars > 0
+    ? `<span class="font-mono text-[10px] text-muted-foreground shrink-0" title="${attr(`${theme.stars} stars on GitHub`)}">★ ${theme.stars}</span>`
+    : "";
+}
+
 function bucketChip(theme) {
   const color = BUCKET_COLORS[theme.bucket] ?? "#888";
   return `<span class="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground" title="color: ${attr(theme.bucket)}">
@@ -219,6 +225,7 @@ export function themeCard(theme) {
   data-name="${attr(theme.name)}"
   data-bucket="${attr(theme.bucket)}"
   data-modes="${attr(theme.modes)}"
+  data-stars="${attr(theme.stars ?? 0)}"
   href="/themes/${attr(theme.slug)}/"
   class="theme-card group relative flex flex-col rounded-xl border border-border/40 bg-card overflow-hidden hover:border-[var(--card-accent)] transition-colors"
   style="--card-accent:${escapeHtml(theme.primary)}">
@@ -229,7 +236,10 @@ export function themeCard(theme) {
       ${handmadeBadge(theme)}
     </div>
     <div class="flex items-center justify-between gap-2">
-      ${bucketChip(theme)}
+      <div class="flex items-center gap-2 min-w-0">
+        ${bucketChip(theme)}
+        ${starCount(theme)}
+      </div>
       ${modeBadge(theme)}
     </div>
   </div>
@@ -301,7 +311,7 @@ export function renderCredit(creditMd) {
 
 // ---------- pages ----------
 
-export function homePage({ featured, discover }) {
+export function homePage({ featured, popular, discover }) {
   const heroButtons = `<div class="flex flex-wrap items-center gap-3 pt-2">
     <a href="/themes/" class="btn-primary inline-flex items-center gap-2 font-mono px-3 h-8 rounded-md">browse themes <span aria-hidden="true">→</span></a>
     <a href="${THEMES_REPO}" target="_blank" rel="noopener noreferrer" class="btn-outline inline-flex items-center gap-2 font-mono px-3 h-8 rounded-md">view on github</a>
@@ -329,6 +339,7 @@ export function homePage({ featured, discover }) {
     </div>
   </section>
   ${section("featured themes", featured, "/themes/")}
+  ${section("popular", popular, "/themes/")}
   ${section("discover", discover, "/themes/")}
   <section class="pb-20 text-center">
     <a href="/themes/" class="btn-primary inline-flex items-center gap-2 font-mono px-3 h-8 rounded-md">browse all themes <span aria-hidden="true">→</span></a>
@@ -339,7 +350,11 @@ export function homePage({ featured, discover }) {
 }
 
 export function browsePage({ themes, buckets }) {
-  const sorted = [...themes].sort((a, b) => a.name.localeCompare(b.name));
+  // Bake the default sort (popular: stars desc, then name asc) into the HTML
+  // so a default page load needs no JS reorder.
+  const sorted = [...themes].sort(
+    (a, b) => (b.stars ?? 0) - (a.stars ?? 0) || a.name.localeCompare(b.name),
+  );
   const colorButtons = buckets.map((bucket) =>
     `<button type="button" name="color" value="${bucket}" title="${bucket}" class="color-dot size-4 rounded-sm shrink-0 transition-all" style="background-color:${BUCKET_COLORS[bucket] ?? "#888"}"></button>`
   ).join("");
@@ -368,6 +383,13 @@ export function browsePage({ themes, buckets }) {
           ${filterPill("mode", "", "all")}
           ${filterPill("mode", "light-dark", "light + dark")}
           ${filterPill("mode", "dark-synth", "dark + synthesized light")}
+        </div>
+      </div>
+      <div class="space-y-1.5">
+        <span class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">sort</span>
+        <div class="flex flex-wrap items-center gap-2">
+          ${filterPill("sort", "popular", "popular")}
+          ${filterPill("sort", "name", "name")}
         </div>
       </div>
       <div class="space-y-1.5">
@@ -461,6 +483,10 @@ export function themeDetailPage(theme) {
       upstream palette${theme.owner ? ` — ${escapeHtml(theme.owner)}` : ""}
     </a>` : "";
 
+  const starsLine = theme.stars > 0
+    ? `<span class="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground">★ ${theme.stars} on GitHub</span>`
+    : "";
+
   const body = `<div class="mx-auto max-w-6xl px-6 py-10">
   <nav class="mb-8 font-mono text-xs flex items-center gap-2 text-muted-foreground">
     <a href="/themes/" class="hover:text-foreground transition-colors">themes</a>
@@ -492,6 +518,7 @@ export function themeDetailPage(theme) {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
               limehawk/hudu-themes/${escapeHtml(theme.slug)}
             </a>
+            ${starsLine}
           </div>
         </div>
         </div>

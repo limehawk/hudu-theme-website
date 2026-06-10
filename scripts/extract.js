@@ -37,6 +37,34 @@ const THEMES_DIR = path.resolve(
   "themes",
 );
 const OUT = path.join(ROOT, "src/data/themes-data.json");
+// The omarchy site's registry carries per-repo GitHub star counts; join on
+// the upstream repo URL so themes can be sorted by upstream popularity.
+const OMARCHY_DATA = process.env.OMARCHY_DATA
+  ?? path.resolve(ROOT, "../omarchy-theme-website/src/data/themes-data.json");
+
+function loadStars() {
+  if (!fs.existsSync(OMARCHY_DATA)) {
+    console.warn("[extract] omarchy registry not found — stars default to 0");
+    return new Map();
+  }
+  const reg = JSON.parse(fs.readFileSync(OMARCHY_DATA, "utf8"));
+  const stars = new Map();
+  for (const t of reg) {
+    const key = `${t.github_owner}/${t.github_repo}`.toLowerCase();
+    stars.set(key, Math.max(stars.get(key) ?? 0, t.stars ?? 0));
+  }
+  return stars;
+}
+
+function starsFor(sourceUrl, stars) {
+  const m = sourceUrl?.match(/github\.com\/([^/]+)\/([^/#?]+)/);
+  if (!m) return 0;
+  const key = `${m[1]}/${m[2]}`.toLowerCase();
+  // The distro repo's stars say nothing about an individual builtin theme's
+  // popularity — don't let basecamp builtins drown the community themes.
+  if (key === "basecamp/omarchy") return 0;
+  return stars.get(key) ?? 0;
+}
 
 const HEX = /#[0-9a-fA-F]{6}\b/g;
 
@@ -76,6 +104,7 @@ function creditFrom(md) {
 
 function main() {
   const themes = [];
+  const starsMap = loadStars();
   for (const slug of fs.readdirSync(THEMES_DIR).sort()) {
     const dir = path.join(THEMES_DIR, slug);
     const cssPath = path.join(dir, "theme.css");
@@ -104,6 +133,7 @@ function main() {
       ...creditFrom(md),
       css_bytes: Buffer.byteLength(css),
     });
+    themes[themes.length - 1].stars = starsFor(themes[themes.length - 1].source_url, starsMap);
   }
   fs.writeFileSync(OUT, JSON.stringify(themes, null, 1));
   console.log(`[extract] wrote ${themes.length} themes -> ${path.relative(ROOT, OUT)}`);

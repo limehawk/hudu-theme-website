@@ -40,15 +40,17 @@
     q: document.querySelector('[name="q"]'),
     mode: document.querySelectorAll('[name="mode"]'),
     color: document.querySelectorAll('[name="color"]'),
+    sort: document.querySelectorAll('[name="sort"]'),
   };
 
-  const state = { q: "", mode: "", color: [] };
+  const state = { q: "", mode: "", color: [], sort: "popular" };
 
   function readURL() {
     const p = new URLSearchParams(location.search);
     state.q = p.get("q") ?? "";
     state.mode = p.get("mode") ?? "";
     state.color = p.getAll("color");
+    state.sort = p.get("sort") === "name" ? "name" : "popular";
   }
 
   function writeURL() {
@@ -56,6 +58,7 @@
     if (state.q) p.set("q", state.q);
     if (state.mode) p.set("mode", state.mode);
     state.color.forEach((c) => p.append("color", c));
+    if (state.sort !== "popular") p.set("sort", state.sort);
     const qs = p.toString();
     const url = qs ? `${location.pathname}?${qs}` : location.pathname;
     history.replaceState(null, "", url);
@@ -69,9 +72,21 @@
       btn.hidden = !input || !input.value;
     });
     inputs.mode.forEach((b) => b.classList.toggle("is-active", b.value === state.mode));
+    inputs.sort.forEach((b) => b.classList.toggle("is-active", b.value === state.sort));
     inputs.color.forEach((b) => b.classList.toggle("is-active", state.color.includes(b.value)));
     const allColors = document.querySelector("[data-color-all]");
     if (allColors) allColors.classList.toggle("is-active", state.color.length === 0);
+  }
+
+  function applySort() {
+    // Cards are baked in popular order (stars desc, name asc); reorder the
+    // DOM nodes only when needed.
+    const sorted = [...cards].sort((a, b) => {
+      if (state.sort === "name") return a.dataset.name.localeCompare(b.dataset.name);
+      return (+b.dataset.stars || 0) - (+a.dataset.stars || 0)
+        || a.dataset.name.localeCompare(b.dataset.name);
+    });
+    sorted.forEach((card) => grid.appendChild(card));
   }
 
   function applyFilters() {
@@ -92,11 +107,12 @@
     if (empty) empty.hidden = visible !== 0;
   }
 
-  function update() { writeURL(); syncInputs(); applyFilters(); }
+  function update() { writeURL(); syncInputs(); applySort(); applyFilters(); }
 
   inputs.q?.addEventListener("input", () => { state.q = inputs.q.value; update(); });
 
   inputs.mode.forEach((b) => b.addEventListener("click", () => { state.mode = b.value; update(); }));
+  inputs.sort.forEach((b) => b.addEventListener("click", () => { state.sort = b.value; update(); }));
   inputs.color.forEach((b) => b.addEventListener("click", () => {
     const idx = state.color.indexOf(b.value);
     if (idx === -1) state.color.push(b.value); else state.color.splice(idx, 1);
@@ -111,9 +127,10 @@
     });
   });
 
-  window.addEventListener("popstate", () => { readURL(); syncInputs(); applyFilters(); });
+  window.addEventListener("popstate", () => { readURL(); syncInputs(); applySort(); applyFilters(); });
 
   readURL();
   syncInputs();
+  if (state.sort !== "popular") applySort();
   applyFilters();
 })();

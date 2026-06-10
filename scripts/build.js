@@ -23,7 +23,7 @@ const HUDU_THEMES = path.resolve(
 const SITE_URL = "https://huduthemes.com";
 
 const FEATURED_SLUGS = [
-  "flexoki", "catppuccin", "tokyo-night", "gruvbox", "nord", "everforest", "kanagawa",
+  "flexoki", "catppuccin", "tokyo-night", "gruvbox", "nord", "kanagawa",
 ];
 
 const log = (msg) => console.log(`[build] ${msg}`);
@@ -61,6 +61,13 @@ function copyRecursive(src, dest) {
 function getFeaturedThemes(themes) {
   const bySlug = new Map(themes.map((t) => [t.slug, t]));
   return FEATURED_SLUGS.map((s) => bySlug.get(s)).filter(Boolean);
+}
+
+function getPopularThemes(themes, count, exclude) {
+  return themes
+    .filter((t) => (t.stars ?? 0) > 0 && !exclude.has(t.slug))
+    .sort((a, b) => (b.stars ?? 0) - (a.stars ?? 0) || a.name.localeCompare(b.name))
+    .slice(0, count);
 }
 
 function getRandomThemes(themes, count, exclude) {
@@ -134,8 +141,10 @@ function main() {
   log("render home");
   const featured = getFeaturedThemes(themes);
   const featuredSlugs = new Set(featured.map((t) => t.slug));
-  const discover = getRandomThemes(themes, 6, featuredSlugs);
-  writeFile("index.html", homePage({ featured, discover }));
+  const popular = getPopularThemes(themes, 6, featuredSlugs);
+  const excludeSlugs = new Set([...featuredSlugs, ...popular.map((t) => t.slug)]);
+  const discover = getRandomThemes(themes, 6, excludeSlugs);
+  writeFile("index.html", homePage({ featured, popular, discover }));
 
   log("render browse");
   const buckets = [...new Set(themes.map((t) => t.bucket))];
