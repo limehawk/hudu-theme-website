@@ -26,6 +26,10 @@ bun run build   # extract + build into out/
 bun run dev     # build + serve on :3000
 ```
 
+## Deploys
+
+Fully automatic: the `huduthemes` Cloudflare Pages project is git-connected — every push to main builds via `scripts/ci-build.sh` (clones the public data repos, extracts, builds). Nightly, `data-refresh.yml` pushes a data-version bump whenever upstream theme data changed, so new community themes flow through without anyone touching anything.
+
 ## Adding a theme
 
 Themes live in the [hudu-themes](https://github.com/limehawk/hudu-themes) repo —
