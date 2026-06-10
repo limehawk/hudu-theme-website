@@ -1,6 +1,6 @@
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
-import { BUCKET_COLORS } from "./colors.js";
+import { BUCKET_COLORS, hexToRgba } from "./colors.js";
 
 // ---------- primitives ----------
 
@@ -128,30 +128,41 @@ function modeTokens(theme, mode) {
   };
 }
 
-// A fake Hudu dashboard rendered purely from palette tokens via inline
-// styles: top nav, left sidebar, main area with two cards of text bars and a
-// row of accent dots. No screenshots, no per-theme CSS classes.
+// A fake Hudu *admin page* rendered purely from palette tokens via inline
+// styles: top nav, left sidebar, then color-coded admin sections — an
+// accent-tinted header pill over a grid of icon tiles, the way the themes
+// style Hudu's Admin screen — plus a row of all 8 accent dots. No
+// screenshots, no per-theme CSS classes.
 export function mockDashboard(theme, mode, { large = false } = {}) {
   const t = modeTokens(theme, mode);
+  const dark = mode === "dark";
   const px = (n) => `${large ? Math.round(n * 1.6) : n}px`;
 
   const bar = (color, widthPct, h = 5) =>
     `<div style="background:${escapeHtml(color)};width:${widthPct}%;height:${px(h)};border-radius:9999px"></div>`;
 
-  const card = (bars) =>
-    `<div style="background:${escapeHtml(t.card)};border:1px solid ${escapeHtml(t.cardBorder)};border-radius:${px(6)};padding:${px(8)};display:flex;flex-direction:column;gap:${px(6)};flex:1;min-width:0">${bars}</div>`;
+  const tile = (accent, w) =>
+    `<div style="display:flex;align-items:center;gap:${px(5)};min-width:0">
+      <div style="background:${escapeHtml(accent)};width:${px(5)};height:${px(5)};border-radius:${px(1.5)};flex-shrink:0"></div>
+      <div style="background:${escapeHtml(t.muted)};width:${w}%;height:${px(3.5)};border-radius:9999px"></div>
+    </div>`;
 
-  const cardA = card([
-    bar(t.text, 65, 6),
-    bar(t.muted, 90, 4),
-    bar(t.muted, 75, 4),
-    bar(t.faint, 50, 4),
-  ].join(""));
-  const cardB = card([
-    bar(t.text, 50, 6),
-    bar(t.muted, 85, 4),
-    bar(t.faint, 60, 4),
-  ].join(""));
+  const section = (family, headerPct, widths) => {
+    const accent = theme.accents[family]?.[dark ? "400" : "600"] ?? theme.primary;
+    const tiles = widths.map((w) => tile(accent, w)).join("");
+    return `<div style="display:flex;flex-direction:column;gap:${px(5)};min-width:0">
+      <div style="background:${escapeHtml(hexToRgba(accent, 0.14))};border-radius:${px(4)};padding:${px(4)} ${px(7)}">
+        <div style="background:${escapeHtml(accent)};width:${headerPct}%;height:${px(4)};border-radius:9999px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:${px(5)} ${px(9)};padding:0 ${px(3)}">${tiles}</div>
+    </div>`;
+  };
+
+  const sections = [
+    section("cyan", 22, [78, 60, 70, 55, 82, 64]),
+    section("blue", 30, [66, 80, 58]),
+    ...(large ? [section("orange", 26, [72, 56, 78])] : []),
+  ].join("");
 
   const dots = t.accents
     .map((c) => `<div style="background:${escapeHtml(c)};width:${px(7)};height:${px(7)};border-radius:9999px"></div>`)
@@ -170,8 +181,8 @@ export function mockDashboard(theme, mode, { large = false } = {}) {
   </div>
   <div style="display:flex;flex:1;min-height:0">
     <div style="background:${escapeHtml(t.sidebar)};border-right:1px solid ${escapeHtml(t.border)};width:22%;padding:${px(8)};display:flex;flex-direction:column;gap:${px(7)};flex-shrink:0">${sidebarRows}</div>
-    <div style="flex:1;padding:${px(10)};display:flex;flex-direction:column;gap:${px(8)};min-width:0">
-      <div style="display:flex;gap:${px(8)}">${cardA}${cardB}</div>
+    <div style="flex:1;padding:${px(10)};display:flex;flex-direction:column;gap:${px(9)};min-width:0">
+      ${sections}
       <div style="display:flex;gap:${px(5)};align-items:center;margin-top:auto">${dots}</div>
     </div>
   </div>

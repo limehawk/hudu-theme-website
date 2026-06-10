@@ -51,7 +51,9 @@ function parseReadmeTables(md) {
     if (!line.startsWith("|")) continue;
     const cells = line.split("|").map((c) => c.trim());
     const token = cells[1]?.replace(/\s*•$/, "").replace(/\s*\(derived\)$/i, "").toLowerCase();
-    const hexes = line.match(HEX) ?? [];
+    // Each swatch cell carries its hex twice (img alt + backtick code); dedupe
+    // so hexes[1] is the second *distinct* value (the 400), not a repeat.
+    const hexes = [...new Set((line.match(HEX) ?? []).map((h) => h.toUpperCase()))];
     if (!token || hexes.length === 0) continue;
     if (token === "black" || token === "paper" || token.startsWith("base-")) {
       base[token] = hexes[0].toUpperCase();
