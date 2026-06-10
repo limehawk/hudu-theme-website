@@ -161,7 +161,7 @@ export function mockDashboard(theme, mode, { large = false } = {}) {
   const sections = [
     section("cyan", 22, [78, 60, 70, 55, 82, 64]),
     section("blue", 30, [66, 80, 58]),
-    ...(large ? [section("orange", 26, [72, 56, 78])] : []),
+    section("orange", 26, [72, 56, 78]),
   ].join("");
 
   const dots = t.accents
