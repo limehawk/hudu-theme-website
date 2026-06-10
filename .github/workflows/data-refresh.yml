@@ -1,0 +1,35 @@
+name: Nightly data refresh
+
+# Cloudflare Pages (git-connected) builds on push and clones the data repos
+# fresh in scripts/ci-build.sh. This workflow just creates a push whenever
+# the theme data has actually changed, using only the built-in GITHUB_TOKEN.
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # ~30min after hudu-themes' registry sync
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check upstream data version
+        run: |
+          THEMES_SHA=$(git ls-remote https://github.com/limehawk/hudu-themes main | cut -f1)
+          REGISTRY_SHA=$(git ls-remote https://github.com/limehawk/omarchy-theme-website main | cut -f1)
+          printf '%s\n%s\n' "$THEMES_SHA" "$REGISTRY_SHA" > data-version.txt
+      - name: Push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data-version.txt
+          if git diff --cached --quiet; then
+            echo "data unchanged — no rebuild"
+          else
+            git commit -m "Data refresh: upstream repos changed"
+            git push
+          fi
