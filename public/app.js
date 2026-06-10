@@ -41,9 +41,10 @@
     mode: document.querySelectorAll('[name="mode"]'),
     color: document.querySelectorAll('[name="color"]'),
     sort: document.querySelectorAll('[name="sort"]'),
+    author: document.querySelector('select[name="author"]'),
   };
 
-  const state = { q: "", mode: "", color: [], sort: "popular" };
+  const state = { q: "", mode: "", color: [], sort: "popular", author: "" };
 
   function readURL() {
     const p = new URLSearchParams(location.search);
@@ -51,6 +52,7 @@
     state.mode = p.get("mode") ?? "";
     state.color = p.getAll("color");
     state.sort = p.get("sort") === "name" ? "name" : "popular";
+    state.author = p.get("author") ?? "";
   }
 
   function writeURL() {
@@ -59,6 +61,7 @@
     if (state.mode) p.set("mode", state.mode);
     state.color.forEach((c) => p.append("color", c));
     if (state.sort !== "popular") p.set("sort", state.sort);
+    if (state.author) p.set("author", state.author);
     const qs = p.toString();
     const url = qs ? `${location.pathname}?${qs}` : location.pathname;
     history.replaceState(null, "", url);
@@ -73,6 +76,17 @@
     });
     inputs.mode.forEach((b) => b.classList.toggle("is-active", b.value === state.mode));
     inputs.sort.forEach((b) => b.classList.toggle("is-active", b.value === state.sort));
+    if (inputs.author) {
+      // The select only lists owners with >= 2 themes; a direct ?author= link
+      // (e.g. from a detail page) may target a singleton — add it on the fly.
+      if (state.author && ![...inputs.author.options].some((o) => o.value === state.author)) {
+        const opt = document.createElement("option");
+        opt.value = state.author;
+        opt.textContent = state.author;
+        inputs.author.appendChild(opt);
+      }
+      inputs.author.value = state.author;
+    }
     inputs.color.forEach((b) => b.classList.toggle("is-active", state.color.includes(b.value)));
     const allColors = document.querySelector("[data-color-all]");
     if (allColors) allColors.classList.toggle("is-active", state.color.length === 0);
@@ -96,6 +110,7 @@
       let show = true;
       if (state.mode && card.dataset.modes !== state.mode) show = false;
       if (show && state.color.length > 0 && !state.color.includes(card.dataset.bucket)) show = false;
+      if (show && state.author && card.dataset.owner !== state.author) show = false;
       if (show && state.q && !card.dataset.name.toLowerCase().includes(lower)) show = false;
       card.hidden = !show;
       if (show) visible++;
@@ -113,6 +128,7 @@
 
   inputs.mode.forEach((b) => b.addEventListener("click", () => { state.mode = b.value; update(); }));
   inputs.sort.forEach((b) => b.addEventListener("click", () => { state.sort = b.value; update(); }));
+  inputs.author?.addEventListener("change", () => { state.author = inputs.author.value; update(); });
   inputs.color.forEach((b) => b.addEventListener("click", () => {
     const idx = state.color.indexOf(b.value);
     if (idx === -1) state.color.push(b.value); else state.color.splice(idx, 1);

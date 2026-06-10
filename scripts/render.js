@@ -350,6 +350,7 @@ export function themeCard(theme) {
   data-bucket="${attr(theme.bucket)}"
   data-modes="${attr(theme.modes)}"
   data-stars="${attr(theme.stars ?? 0)}"
+  data-owner="${attr(theme.owner ?? "")}"
   href="/themes/${attr(theme.slug)}/"
   class="theme-card group relative flex flex-col rounded-xl border border-border/40 bg-card overflow-hidden hover:border-[var(--card-accent)] transition-colors"
   style="--card-accent:${escapeHtml(theme.primary)}">
@@ -473,7 +474,7 @@ export function homePage({ featured, popular, discover }) {
   return layout({ title: "home", path: "/", body });
 }
 
-export function browsePage({ themes, buckets }) {
+export function browsePage({ themes, buckets, owners = [] }) {
   // Bake the default sort (popular: stars desc, then name asc) into the HTML
   // so a default page load needs no JS reorder.
   const sorted = [...themes].sort(
@@ -485,6 +486,14 @@ export function browsePage({ themes, buckets }) {
 
   const filterPill = (name, value, label) =>
     `<button type="button" name="${name}" value="${value}" class="pill">${escapeHtml(label)}</button>`;
+
+  const authorOptions = owners.map(({ name, count }) =>
+    `<option value="${attr(name)}">${escapeHtml(name)} (${count})</option>`
+  ).join("");
+  const authorSelect = `<select name="author" aria-label="Filter by author" class="w-full sm:w-56 font-mono text-xs h-9 px-2 rounded-md border border-border/60 bg-input/40 text-muted-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring">
+    <option value="">all authors</option>
+    ${authorOptions}
+  </select>`;
 
   const body = `<div class="mx-auto max-w-6xl px-6 py-10 space-y-8">
   <div>
@@ -498,6 +507,7 @@ export function browsePage({ themes, buckets }) {
         <input type="search" name="q" placeholder="find a theme..." autocomplete="off" class="w-full font-mono text-sm pl-3 pr-8 h-9 rounded-md border border-border/60 bg-input/40 focus:outline-none focus:ring-1 focus:ring-ring">
         <button type="button" data-clear="q" hidden class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors font-mono text-sm leading-none size-5 inline-flex items-center justify-center rounded hover:bg-foreground/10" aria-label="Clear theme search">×</button>
       </div>
+      ${authorSelect}
     </div>
 
     <div class="flex flex-wrap items-start gap-x-6 gap-y-3">
@@ -604,7 +614,12 @@ export function themeDetailPage(theme) {
 
   const sourceLink = theme.source_url ? `<a href="${attr(theme.source_url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      upstream palette${theme.owner ? ` — ${escapeHtml(theme.owner)}` : ""}
+      upstream palette
+    </a>` : "";
+
+  const authorLink = theme.owner ? `<a href="/themes/?author=${encodeURIComponent(theme.owner)}" class="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      ${escapeHtml(theme.owner)}
     </a>` : "";
 
   const starsLine = theme.stars > 0
@@ -637,6 +652,7 @@ export function themeDetailPage(theme) {
             </div>
           </div>
           <div class="border-t border-border/40 pt-4 space-y-3">
+            ${authorLink}
             ${sourceLink}
             <a href="${THEMES_REPO}/tree/main/themes/${attr(theme.slug)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>

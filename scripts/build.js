@@ -148,7 +148,17 @@ function main() {
 
   log("render browse");
   const buckets = [...new Set(themes.map((t) => t.bucket))];
-  writeFile("themes/index.html", browsePage({ themes, buckets }));
+  // Author dropdown: owners with >= 2 themes (singletons would triple the
+  // list); direct ?author= URLs still work for any owner.
+  const ownerCounts = new Map();
+  for (const t of themes) {
+    if (t.owner) ownerCounts.set(t.owner, (ownerCounts.get(t.owner) ?? 0) + 1);
+  }
+  const owners = [...ownerCounts.entries()]
+    .filter(([, count]) => count >= 2)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+  writeFile("themes/index.html", browsePage({ themes, buckets, owners }));
 
   log(`render ${themes.length} theme detail pages`);
   for (const theme of themes) {
