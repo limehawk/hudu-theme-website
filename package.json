@@ -1,0 +1,20 @@
+{
+  "name": "hudu-theme-website",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "extract": "node scripts/extract.js",
+    "build": "node scripts/extract.js && node scripts/build.js",
+    "dev": "node scripts/extract.js && node scripts/build.js && bunx serve out -p 3000",
+    "serve": "bunx serve out -p 3000",
+    "deploy": "npm run build && npx wrangler pages deploy out/ --project-name=hudu-theme-website"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4",
+    "marked": "^18.0.0",
+    "sanitize-html": "^2.13.0",
+    "tailwindcss": "^4",
+    "wrangler": "^4.71.0"
+  }
+}

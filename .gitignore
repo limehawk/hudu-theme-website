@@ -1,0 +1,22 @@
+node_modules/
+/out/
+/build
+.DS_Store
+*.pem
+npm-debug.log*
+.env*
+.vercel
+.wrangler/
+**/.wrangler/
+.dev.vars
+.worktrees/
+nohup.out
+
+# Local-only files
+CLAUDE.md
+.mcp.json
+.talismanrc
+docs/plans/
+.superpowers/
+.claude/skills/
+repomix-output.md
