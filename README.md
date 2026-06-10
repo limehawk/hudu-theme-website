@@ -7,9 +7,9 @@
 
 ## Features
 
-- **260+ themes** — color schemes ported from popular terminal and editor palettes, sourced from [limehawk/hudu-themes](https://github.com/limehawk/hudu-themes)
-- **Live previews** — every theme renders a mock Hudu dashboard straight from its palette tokens, in dark and light modes
-- **Color filtering** — browse themes by hue, mode (real light+dark vs synthesized light), or name
+- **261 themes** — color schemes ported from popular terminal and editor palettes, sourced from [limehawk/hudu-themes](https://github.com/limehawk/hudu-themes)
+- **Live previews** — every theme renders a mini replica of Hudu's Admin page straight from its palette tokens, in dark and light modes (no screenshots)
+- **Filtering & sorting** — browse by hue, mode (real light+dark vs synthesized light), or name; sort by popularity (upstream GitHub stars) or alphabetically
 - **One-paste install** — copy the CSS, paste it into Hudu Admin → Design → Custom CSS, save, hard-refresh
 
 ## How it works
