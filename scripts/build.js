@@ -1,8 +1,10 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
+  setAssetVersion,
   homePage,
   browsePage,
   themeDetailPage,
@@ -157,6 +159,17 @@ function main() {
 
   log("copy public/");
   copyRecursive(PUBLIC, OUT);
+
+  // Cache-bust assets: HTML must pin the exact app.js it shipped with, or
+  // browsers holding a heuristically-cached script break new interactions.
+  const assetVersion = crypto
+    .createHash("sha256")
+    .update(fs.readFileSync(path.join(PUBLIC, "app.js")))
+    .update(fs.readFileSync(path.join(ROOT, "src/styles.css")))
+    .digest("hex")
+    .slice(0, 8);
+  setAssetVersion(assetVersion);
+  log(`asset version ${assetVersion}`);
 
   log("render home");
   const featured = getFeaturedThemes(themes);

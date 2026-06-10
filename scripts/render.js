@@ -20,6 +20,9 @@ const THEMES_REPO = "https://github.com/limehawk/hudu-themes";
 
 // ---------- shell ----------
 
+let ASSET_V = "";
+export function setAssetVersion(v) { ASSET_V = v; }
+
 const HEAD_FONTS = `
 <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 `.trim();
@@ -47,13 +50,13 @@ export function layout({ title, description, path, body }) {
 <meta property="og:site_name" content="Hudu Themes">
 <meta name="twitter:card" content="summary">
 ${HEAD_FONTS}
-<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/styles.css?v=${ASSET_V}">
 </head>
 <body class="font-sans antialiased min-h-screen flex flex-col">
 ${header()}
 <main class="flex-1">${body}</main>
 ${footer()}
-<script src="/app.js" defer></script>
+<script src="/app.js?v=${ASSET_V}" defer></script>
 </body>
 </html>`;
 }
