@@ -41,8 +41,7 @@
     const author = el.getAttribute("data-author-link");
     const input = document.querySelector('input[name="author"]');
     if (input) {
-      input.value = author;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
+      document.dispatchEvent(new CustomEvent("author-filter", { detail: author }));
       input.scrollIntoView({ block: "nearest", behavior: "smooth" });
     } else {
       window.location.href = `/themes/?author=${encodeURIComponent(author)}`;
@@ -83,7 +82,17 @@
     if (state.author) p.set("author", state.author);
     const qs = p.toString();
     const url = qs ? `${location.pathname}?${qs}` : location.pathname;
-    history.replaceState(null, "", url);
+    return url;
+  }
+
+  // Clicks are navigation-like: they push a history entry so Back unwinds
+  // the filter change. Typing replaces in place (no entry per keystroke).
+  function update(push = false) {
+    const url = writeURL();
+    if (url !== location.pathname + location.search) {
+      history[push ? "pushState" : "replaceState"](null, "", url);
+    }
+    syncInputs(); applySort(); applyFilters();
   }
 
   function syncInputs() {
@@ -131,26 +140,25 @@
     if (empty) empty.hidden = visible !== 0;
   }
 
-  function update() { writeURL(); syncInputs(); applySort(); applyFilters(); }
-
   inputs.q?.addEventListener("input", () => { state.q = inputs.q.value; update(); });
 
-  inputs.mode.forEach((b) => b.addEventListener("click", () => { state.mode = b.value; update(); }));
-  inputs.sort.forEach((b) => b.addEventListener("click", () => { state.sort = b.value; update(); }));
+  inputs.mode.forEach((b) => b.addEventListener("click", () => { state.mode = b.value; update(true); }));
+  inputs.sort.forEach((b) => b.addEventListener("click", () => { state.sort = b.value; update(true); }));
   inputs.author?.addEventListener("input", () => { state.author = inputs.author.value; update(); });
+  document.addEventListener("author-filter", (e) => { state.author = e.detail; update(true); });
   inputs.color.forEach((b) => b.addEventListener("click", () => {
     const idx = state.color.indexOf(b.value);
     if (idx === -1) state.color.push(b.value); else state.color.splice(idx, 1);
-    update();
+    update(true);
   }));
-  document.querySelector("[data-color-all]")?.addEventListener("click", () => { state.color = []; update(); });
+  document.querySelector("[data-color-all]")?.addEventListener("click", () => { state.color = []; update(true); });
 
   document.querySelectorAll("[data-clear]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const target = btn.getAttribute("data-clear");
       if (target === "q") state.q = "";
       if (target === "author") state.author = "";
-      update();
+      update(true);
     });
   });
 
