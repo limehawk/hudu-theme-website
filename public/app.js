@@ -30,6 +30,25 @@
     });
   });
 
+  // ---------- author-link clicks (work everywhere) ----------
+  // Clicking an author name on a theme card either filters the browse grid
+  // (when already on /themes/) or navigates to /themes/?author=<name>.
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-author-link]");
+    if (!el) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const author = el.getAttribute("data-author-link");
+    const input = document.querySelector('input[name="author"]');
+    if (input) {
+      input.value = author;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } else {
+      window.location.href = `/themes/?author=${encodeURIComponent(author)}`;
+    }
+  });
+
   // ---------- browse-page filter (only runs on /themes/) ----------
   const grid = document.querySelector("[data-theme-grid]");
   if (!grid) return;
@@ -41,7 +60,7 @@
     mode: document.querySelectorAll('[name="mode"]'),
     color: document.querySelectorAll('[name="color"]'),
     sort: document.querySelectorAll('[name="sort"]'),
-    author: document.querySelector('select[name="author"]'),
+    author: document.querySelector('input[name="author"]'),
   };
 
   const state = { q: "", mode: "", color: [], sort: "popular", author: "" };
@@ -76,17 +95,7 @@
     });
     inputs.mode.forEach((b) => b.classList.toggle("is-active", b.value === state.mode));
     inputs.sort.forEach((b) => b.classList.toggle("is-active", b.value === state.sort));
-    if (inputs.author) {
-      // The select only lists owners with >= 2 themes; a direct ?author= link
-      // (e.g. from a detail page) may target a singleton — add it on the fly.
-      if (state.author && ![...inputs.author.options].some((o) => o.value === state.author)) {
-        const opt = document.createElement("option");
-        opt.value = state.author;
-        opt.textContent = state.author;
-        inputs.author.appendChild(opt);
-      }
-      inputs.author.value = state.author;
-    }
+    if (inputs.author) inputs.author.value = state.author;
     inputs.color.forEach((b) => b.classList.toggle("is-active", state.color.includes(b.value)));
     const allColors = document.querySelector("[data-color-all]");
     if (allColors) allColors.classList.toggle("is-active", state.color.length === 0);
@@ -110,7 +119,7 @@
       let show = true;
       if (state.mode && card.dataset.modes !== state.mode) show = false;
       if (show && state.color.length > 0 && !state.color.includes(card.dataset.bucket)) show = false;
-      if (show && state.author && card.dataset.owner !== state.author) show = false;
+      if (show && state.author && !card.dataset.owner.toLowerCase().includes(state.author.toLowerCase())) show = false;
       if (show && state.q && !card.dataset.name.toLowerCase().includes(lower)) show = false;
       card.hidden = !show;
       if (show) visible++;
@@ -128,7 +137,7 @@
 
   inputs.mode.forEach((b) => b.addEventListener("click", () => { state.mode = b.value; update(); }));
   inputs.sort.forEach((b) => b.addEventListener("click", () => { state.sort = b.value; update(); }));
-  inputs.author?.addEventListener("change", () => { state.author = inputs.author.value; update(); });
+  inputs.author?.addEventListener("input", () => { state.author = inputs.author.value; update(); });
   inputs.color.forEach((b) => b.addEventListener("click", () => {
     const idx = state.color.indexOf(b.value);
     if (idx === -1) state.color.push(b.value); else state.color.splice(idx, 1);
@@ -138,7 +147,9 @@
 
   document.querySelectorAll("[data-clear]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (btn.getAttribute("data-clear") === "q") state.q = "";
+      const target = btn.getAttribute("data-clear");
+      if (target === "q") state.q = "";
+      if (target === "author") state.author = "";
       update();
     });
   });

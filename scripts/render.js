@@ -316,7 +316,7 @@ export function adminPreview(theme, mode, { large = false } = {}) {
 // ---------- badges ----------
 
 function modeBadgeText(theme) {
-  return theme.modes === "light-dark" ? "light + dark" : "dark + synthesized light";
+  return theme.modes === "light-dark" ? "native light + dark" : "synthesized light";
 }
 
 function modeBadge(theme) {
@@ -360,6 +360,7 @@ export function themeCard(theme) {
       <h3 class="font-mono text-sm font-medium text-foreground truncate">${escapeHtml(theme.name)}</h3>
       ${handmadeBadge(theme)}
     </div>
+    ${theme.owner ? `<span data-author-link="${attr(theme.owner)}" role="button" tabindex="0" class="font-mono text-[10px] text-muted-foreground truncate block cursor-pointer hover:text-foreground transition-colors">${escapeHtml(theme.owner)}</span>` : ""}
     <div class="flex items-center justify-between gap-2">
       <div class="flex items-center gap-2 min-w-0">
         ${bucketChip(theme)}
@@ -436,7 +437,7 @@ export function renderCredit(creditMd) {
 
 // ---------- pages ----------
 
-export function homePage({ featured, popular, discover }) {
+export function homePage({ featured, popular, discover, authorSpotlight }) {
   const heroButtons = `<div class="flex flex-wrap items-center gap-3 pt-2">
     <a href="/themes/" class="btn-primary inline-flex items-center gap-2 font-mono px-3 h-8 rounded-md">browse themes <span aria-hidden="true">→</span></a>
     <a href="${THEMES_REPO}" target="_blank" rel="noopener noreferrer" class="btn-outline inline-flex items-center gap-2 font-mono px-3 h-8 rounded-md">view on github</a>
@@ -465,6 +466,15 @@ export function homePage({ featured, popular, discover }) {
   </section>
   ${section("featured themes", featured, "/themes/")}
   ${section("popular", popular, "/themes/")}
+  ${authorSpotlight ? `<section class="pb-20">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-mono text-xs text-muted-foreground uppercase tracking-wider">
+        author spotlight — <a href="/themes/?author=${encodeURIComponent(authorSpotlight.author)}" class="text-foreground hover:underline underline-offset-4">${escapeHtml(authorSpotlight.author)}</a>
+      </h2>
+      <a href="/themes/?author=${encodeURIComponent(authorSpotlight.author)}" class="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors">view all →</a>
+    </div>
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">${authorSpotlight.themes.map(themeCard).join("")}</div>
+  </section>` : ""}
   ${section("discover", discover, "/themes/")}
   <section class="pb-20 text-center">
     <a href="/themes/" class="btn-primary inline-flex items-center gap-2 font-mono px-3 h-8 rounded-md">browse all themes <span aria-hidden="true">→</span></a>
@@ -474,7 +484,7 @@ export function homePage({ featured, popular, discover }) {
   return layout({ title: "home", path: "/", body });
 }
 
-export function browsePage({ themes, buckets, owners = [] }) {
+export function browsePage({ themes, buckets }) {
   // Bake the default sort (popular: stars desc, then name asc) into the HTML
   // so a default page load needs no JS reorder.
   const sorted = [...themes].sort(
@@ -487,13 +497,10 @@ export function browsePage({ themes, buckets, owners = [] }) {
   const filterPill = (name, value, label) =>
     `<button type="button" name="${name}" value="${value}" class="pill">${escapeHtml(label)}</button>`;
 
-  const authorOptions = owners.map(({ name, count }) =>
-    `<option value="${attr(name)}">${escapeHtml(name)} (${count})</option>`
-  ).join("");
-  const authorSelect = `<select name="author" aria-label="Filter by author" class="w-full sm:w-56 font-mono text-xs h-9 px-2 rounded-md border border-border/60 bg-input/40 text-muted-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring">
-    <option value="">all authors</option>
-    ${authorOptions}
-  </select>`;
+  const authorInput = `<div class="w-full sm:w-48 relative">
+        <input type="search" name="author" placeholder="find an author..." autocomplete="off" class="w-full font-mono text-sm pl-3 pr-8 h-9 rounded-md border border-border/60 bg-input/40 focus:outline-none focus:ring-1 focus:ring-ring">
+        <button type="button" data-clear="author" hidden class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors font-mono text-sm leading-none size-5 inline-flex items-center justify-center rounded hover:bg-foreground/10" aria-label="Clear author search">×</button>
+      </div>`;
 
   const body = `<div class="mx-auto max-w-6xl px-6 py-10 space-y-8">
   <div>
@@ -507,16 +514,16 @@ export function browsePage({ themes, buckets, owners = [] }) {
         <input type="search" name="q" placeholder="find a theme..." autocomplete="off" class="w-full font-mono text-sm pl-3 pr-8 h-9 rounded-md border border-border/60 bg-input/40 focus:outline-none focus:ring-1 focus:ring-ring">
         <button type="button" data-clear="q" hidden class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors font-mono text-sm leading-none size-5 inline-flex items-center justify-center rounded hover:bg-foreground/10" aria-label="Clear theme search">×</button>
       </div>
-      ${authorSelect}
+      ${authorInput}
     </div>
 
     <div class="flex flex-wrap items-start gap-x-6 gap-y-3">
       <div class="space-y-1.5">
-        <span class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">modes</span>
+        <span class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">light mode</span>
         <div class="flex flex-wrap items-center gap-2">
           ${filterPill("mode", "", "all")}
-          ${filterPill("mode", "light-dark", "light + dark")}
-          ${filterPill("mode", "dark-synth", "dark + synthesized light")}
+          ${filterPill("mode", "light-dark", "native")}
+          ${filterPill("mode", "dark-synth", "synthesized")}
         </div>
       </div>
       <div class="space-y-1.5">

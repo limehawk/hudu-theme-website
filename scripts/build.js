@@ -63,6 +63,26 @@ function getFeaturedThemes(themes) {
   return FEATURED_SLUGS.map((s) => bySlug.get(s)).filter(Boolean);
 }
 
+// Daily-rotating author spotlight: authors with >= 6 themes, picked by
+// day-of-year (omarchy-site pattern); their top 6 themes by stars.
+function getFeaturedAuthor(themes, exclude) {
+  const byAuthor = new Map();
+  for (const t of themes) {
+    if (!t.owner || exclude.has(t.slug)) continue;
+    const list = byAuthor.get(t.owner) ?? [];
+    list.push(t);
+    byAuthor.set(t.owner, list);
+  }
+  const eligible = [...byAuthor.entries()]
+    .filter(([, ts]) => ts.length >= 6)
+    .sort(([a], [b]) => a.localeCompare(b));
+  if (eligible.length === 0) return null;
+  const now = new Date();
+  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+  const [author, themesForAuthor] = eligible[dayOfYear % eligible.length];
+  return { author, themes: themesForAuthor.sort((a, b) => (b.stars ?? 0) - (a.stars ?? 0) || a.name.localeCompare(b.name)).slice(0, 6) };
+}
+
 function getPopularThemes(themes, count, exclude) {
   return themes
     .filter((t) => (t.stars ?? 0) > 0 && !exclude.has(t.slug))
@@ -143,22 +163,14 @@ function main() {
   const featuredSlugs = new Set(featured.map((t) => t.slug));
   const popular = getPopularThemes(themes, 6, featuredSlugs);
   const excludeSlugs = new Set([...featuredSlugs, ...popular.map((t) => t.slug)]);
+  const authorSpotlight = getFeaturedAuthor(themes, excludeSlugs);
+  (authorSpotlight?.themes ?? []).forEach((t) => excludeSlugs.add(t.slug));
   const discover = getRandomThemes(themes, 6, excludeSlugs);
-  writeFile("index.html", homePage({ featured, popular, discover }));
+  writeFile("index.html", homePage({ featured, popular, discover, authorSpotlight }));
 
   log("render browse");
   const buckets = [...new Set(themes.map((t) => t.bucket))];
-  // Author dropdown: owners with >= 2 themes (singletons would triple the
-  // list); direct ?author= URLs still work for any owner.
-  const ownerCounts = new Map();
-  for (const t of themes) {
-    if (t.owner) ownerCounts.set(t.owner, (ownerCounts.get(t.owner) ?? 0) + 1);
-  }
-  const owners = [...ownerCounts.entries()]
-    .filter(([, count]) => count >= 2)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-  writeFile("themes/index.html", browsePage({ themes, buckets, owners }));
+writeFile("themes/index.html", browsePage({ themes, buckets }));
 
   log(`render ${themes.length} theme detail pages`);
   for (const theme of themes) {
