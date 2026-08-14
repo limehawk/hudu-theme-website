@@ -11,6 +11,11 @@ git -C "$DEPS/omarchy-theme-website" sparse-checkout set src/data
 export HUDU_THEMES_DIR="$DEPS/hudu-themes"
 export OMARCHY_DATA="$DEPS/omarchy-theme-website/src/data/themes-data.json"
 
-npm install --no-audit --no-fund
-node scripts/extract.js
-node scripts/build.js
+if ! command -v bun >/dev/null 2>&1; then
+  curl -fsSL https://bun.sh/install | bash
+  export PATH="$HOME/.bun/bin:$PATH"
+fi
+
+bun install --frozen-lockfile
+bun scripts/extract.js
+bun scripts/build.js
