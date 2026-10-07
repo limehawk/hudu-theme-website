@@ -5,6 +5,14 @@
 
 > Browse and preview drop-in CSS themes for [Hudu](https://hudu.com). Filter by color and mode, preview light and dark palettes, and copy one stylesheet into Hudu's Custom CSS.
 
+## URLs
+
+| | |
+|--|--|
+| **Production** | https://huduthemes.com |
+| **Dev** | https://huduthemes.pages.dev |
+| **Host** | Cloudflare Pages (project `huduthemes`) |
+
 ## Features
 
 - **261 themes** — color schemes ported from popular terminal and editor palettes, sourced from [limehawk/hudu-themes](https://github.com/limehawk/hudu-themes)
